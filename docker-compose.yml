@@ -1,0 +1,125 @@
+name: tax-simulator
+
+services:
+  app:
+    build:
+      context: .
+      target: app
+    env_file: .env
+    volumes:
+      - public_assets:/var/www/html/public
+    depends_on:
+      mysql:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          initial_sync: true
+          path: ./app
+          target: /var/www/html/app
+        - action: sync
+          initial_sync: true
+          path: ./routes
+          target: /var/www/html/routes
+        - action: sync
+          initial_sync: true
+          path: ./resources
+          target: /var/www/html/resources
+        - action: sync
+          initial_sync: true
+          path: ./tests
+          target: /var/www/html/tests
+        - action: sync
+          initial_sync: true
+          path: ./database
+          target: /var/www/html/database
+        - action: sync
+          initial_sync: true
+          path: ./config
+          target: /var/www/html/config
+        - action: sync
+          initial_sync: true
+          path: ./bootstrap/app.php
+          target: /var/www/html/bootstrap/app.php
+        - action: rebuild
+          path: ./composer.json
+        - action: rebuild
+          path: ./composer.lock
+        - action: sync
+          initial_sync: true
+          path: ./phpunit.xml
+          target: /var/www/html/phpunit.xml
+        - action: rebuild
+          path: ./.env
+        - action: rebuild
+          path: ./Dockerfile
+
+  nginx:
+    build:
+      context: .
+      target: nginx
+    ports:
+      - "127.0.0.1:${APP_PORT:-8088}:80"
+    volumes:
+      - public_assets:/var/www/html/public:ro
+    depends_on:
+      - app
+      - node
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    develop:
+      watch:
+        - action: rebuild
+          path: ./docker/nginx/default.conf
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_PASSWORD mysql -h 127.0.0.1 -u $$MYSQL_USER -D $$MYSQL_DATABASE -e 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  node:
+    build:
+      context: .
+      target: node
+    environment:
+      APP_URL: ${APP_URL}
+      VITE_APP_NAME: ${APP_NAME}
+      VITE_PORT: ${VITE_PORT:-5178}
+    ports:
+      - "127.0.0.1:${VITE_PORT:-5178}:5173"
+    volumes:
+      - public_assets:/var/www/html/public
+    depends_on:
+      - app
+    develop:
+      watch:
+        - action: sync
+          initial_sync: true
+          path: ./resources
+          target: /var/www/html/resources
+        - action: sync+restart
+          path: ./vite.config.js
+          target: /var/www/html/vite.config.js
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./package-lock.json
+
+volumes:
+  mysql_data:
+  public_assets:

@@ -1,0 +1,53 @@
+name: tax_simulator
+description: Thai Personal Income Tax Simulator — mobile client (Android + iOS).
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+  flutter: ">=3.22.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_riverpod: ^2.5.1
+
+  # Routing
+  go_router: ^14.2.0
+
+  # Networking
+  dio: ^5.5.0
+
+  # Secure token storage (Keychain / Keystore)
+  flutter_secure_storage: ^9.2.2
+
+  # Lightweight local cache for reference data / flags
+  shared_preferences: ^2.3.0
+
+  # device_name for /auth/login and /auth/register
+  device_info_plus: ^10.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
+  # Self-hosted Thai UI font to match the web app (Noto Sans Thai).
+  # Drop the .ttf files into assets/fonts/ then uncomment:
+  # fonts:
+  #   - family: NotoSansThai
+  #     fonts:
+  #       - asset: assets/fonts/NotoSansThai-Regular.ttf
+  #         weight: 400
+  #       - asset: assets/fonts/NotoSansThai-Medium.ttf
+  #         weight: 500
+  #       - asset: assets/fonts/NotoSansThai-SemiBold.ttf
+  #         weight: 600
+  #       - asset: assets/fonts/NotoSansThai-Bold.ttf
+  #         weight: 700
